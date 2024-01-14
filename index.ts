@@ -11,6 +11,18 @@ type Project = {
     id: String
 }
 
+import {createInterface} from "readline";
+
+const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+const question = (questionText: string) =>
+    new Promise<string>(resolve => rl.question(questionText, resolve))
+        .finally(() => rl.close());
+
+
 const fullName = (task : Task): String => {
     return `${task.project.name}: ${task.name}`
 }
@@ -51,12 +63,28 @@ const getProjects = async (): Promise<Project[]> => {
     return data
 }
 
+const generatePrompt = (tasks: Task[], description: String): string => {
+    return `
+    Devo creare il mio timesheet su Clockify per oggi.
+    Sono nel team prodotto/tech di Vitesy, la mia giornata lavorativa è dalle 09:00 alle 18:00, con pausa pranzo dalle 13:00 alle 14:00. La pausa pranza non deve essere loggata, ma in quella fascia oraria non deve figurare nessuna attività.
+    Ora ti girerò la lista dei task e progetti sotto forma di array Progetto: Task, e poi ti dirò cosa ho fatto questa giornata. Generami il file da importare su clockify.
+
+    ${tasks.map(v => fullName(v))}
+
+    Cosa ho fatto oggi:
+
+    ${description}
+
+
+    `
+}
 
 const load = async () => {
     const projects = await getProjects()
     const tasks = await getAllTasks(projects);
-    console.log(tasks)
-    console.log(`Tasks ${tasks.map(v => fullName(v))}`)
+    const prompt = await question("Descrivi la tua giornata, descrivendo ogni task a che ora è iniziato:\n")
+    console.log("-----COPIA QUESTO PROMPT SU GPT PER AVERE IL FILE -----")
+    console.log(generatePrompt(tasks, prompt))
 }
 
 
